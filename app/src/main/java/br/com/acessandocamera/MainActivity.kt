@@ -1,8 +1,11 @@
 package br.com.acessandocamera
 
 import android.Manifest
+import android.app.Activity
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.Bitmap
+import android.net.Uri
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.provider.ContactsContract.Intents.Insert.ACTION
@@ -30,10 +33,12 @@ class MainActivity : AppCompatActivity() {
     override fun onStart() {
         super.onStart()
 
-        if(perdirPermissaoAoUsuario()) AlertDialog.Builder(this)
-                .setTitle("Alerta de utilização do sistema")
-                .setMessage("Vá até as suas configurações para dar as permissões")
-                .setPositiveButton("Obrigado!"){dialog, _ -> dialog.dismiss() }.show()
+        if(perdirPermissaoAoUsuario()) {
+            AlertDialog.Builder(this)
+                    .setTitle("Alerta de utilização do sistema")
+                    .setMessage("Vá até as suas configurações para dar as permissões")
+                    .setPositiveButton("Obrigado!"){dialog, _ -> dialog.dismiss() }.show()
+        }
     }
 
     private fun perdirPermissaoAoUsuario(): Boolean = sharedPreferencesHelper.pegarAlertaAoIniciar()
@@ -44,13 +49,12 @@ class MainActivity : AppCompatActivity() {
 
         botaoFoto.setOnClickListener {
             val permissao = Manifest.permission.CAMERA
-            permissaoParaAcesso.requerimentoDeCamera(permissao)
+            requerimentoDeCamera(permissao)
             abrirGaleria()
         }
 
         botaoGaleria.setOnClickListener {
-            val permissao = Manifest.permission.WRITE_EXTERNAL_STORAGE
-            permissaoParaAcesso.requerimentoDeGaleria(permissao)
+            requerimentoDeGaleria()
         }
     }
 
@@ -73,10 +77,35 @@ class MainActivity : AppCompatActivity() {
         startActivityForResult(galeriaIntent, 200)
     }
 
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if(requestCode == 200 && resultCode == Activity.RESULT_OK && intent?.data !=null){
+            val foto = intent.data as Uri
+            imagem.setImageURI(foto)
+        } else if(intent?.extras != null) {
+            val foto = intent.extras?.get("data") as Bitmap
+            imagem.setImageBitmap(foto)
+        }
+    }
+
+    private fun requerimentoDeCamera(permissao: String){
+        permissaoParaAcesso.requerimentoDeCamera(permissao)
+    }
+
+    private fun requerimentoDeGaleria(){
+        val permissoes =listOf(Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.CAMERA)
+        permissaoParaAcesso.requerimentoDeGaleria(permissoes)
+    }
+
     override fun onRequestPermissionsResult(
             requestCode: Int,
             permissions: Array<out String>,
             grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        permissaoParaAcesso.resultadoPedidoDePermissao(
+                requestCode,
+                permissions,
+                grantResults
+        )
     }
 }

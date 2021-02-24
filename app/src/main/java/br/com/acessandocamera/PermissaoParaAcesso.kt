@@ -24,13 +24,13 @@ class PermissaoParaAcesso (private val activity: Activity,
         }
     }
 
-    fun requerimentoDeGaleria(permissao: String){
+    fun requerimentoDeGaleria(permissao: List<String>){
         val permissoesNegadas = mutableListOf<String>()
 
         permissao.forEach {
-            if(ContextCompat.checkSelfPermission(activity, it.toString()) == PackageManager.PERMISSION_DENIED
+            if(ContextCompat.checkSelfPermission(activity, it) == PackageManager.PERMISSION_DENIED
             ){
-                permissoesNegadas.add(it.toString())
+                permissoesNegadas.add(it)
             }
         }
 
